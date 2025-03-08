@@ -3,7 +3,7 @@
     const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editor;
     const { PanelBody, TextareaControl, RadioControl, Button, Notice } = wp.components;
     const { useSelect, useDispatch } = wp.data;
-    const { useState, useEffect } = wp.element;
+    const { useState, useEffect, createElement } = wp.element;
     const { __ } = wp.i18n;
 
     const SchemaLinkerPanel = () => {
@@ -111,88 +111,118 @@
         }, [notice]);
 
         if (!isRankMathActive) {
-            return (
-                <PanelBody>
-                    <Notice status="error" isDismissible={false}>
-                        {__('Rank Math SEO plugin is required for Schema Linker to work.', 'rank-math-schema-linker')}
-                    </Notice>
-                </PanelBody>
+            return createElement(
+                PanelBody,
+                {},
+                createElement(
+                    Notice,
+                    { status: "error", isDismissible: false },
+                    __('Rank Math SEO plugin is required for Schema Linker to work.', 'rank-math-schema-linker')
+                )
             );
         }
 
-        return (
-            <PanelBody title={__('Add Links to Schema', 'rank-math-schema-linker')} initialOpen={true}>
-                {notice.show && (
-                    <Notice status={notice.type} isDismissible={true} onRemove={() => setNotice({ ...notice, show: false })}>
-                        {notice.message}
-                    </Notice>
-                )}
+        return createElement(
+            PanelBody,
+            { 
+                title: __('Add Links to Schema', 'rank-math-schema-linker'), 
+                initialOpen: true 
+            },
+            [
+                notice.show && createElement(
+                    Notice,
+                    { 
+                        status: notice.type, 
+                        isDismissible: true, 
+                        onRemove: () => setNotice({ ...notice, show: false }) 
+                    },
+                    notice.message
+                ),
                 
-                <RadioControl
-                    label={__('Link Type', 'rank-math-schema-linker')}
-                    selected={linkType}
-                    options={[
-                        { label: __('Significant Links', 'rank-math-schema-linker'), value: 'significant' },
-                        { label: __('Related Links', 'rank-math-schema-linker'), value: 'related' }
-                    ]}
-                    onChange={setLinkType}
-                    help={
-                        linkType === 'significant' 
+                createElement(
+                    RadioControl,
+                    {
+                        label: __('Link Type', 'rank-math-schema-linker'),
+                        selected: linkType,
+                        options: [
+                            { label: __('Significant Links', 'rank-math-schema-linker'), value: 'significant' },
+                            { label: __('Related Links', 'rank-math-schema-linker'), value: 'related' }
+                        ],
+                        onChange: setLinkType,
+                        help: linkType === 'significant' 
                             ? __('Important links related to this content', 'rank-math-schema-linker')
                             : __('Other related content links', 'rank-math-schema-linker')
                     }
-                />
+                ),
                 
-                <TextareaControl
-                    label={__('Enter URLs (one per line)', 'rank-math-schema-linker')}
-                    value={linksInput}
-                    onChange={setLinksInput}
-                    rows={5}
-                    placeholder="https://example.com"
-                    help={__('Enter complete URLs including https://', 'rank-math-schema-linker')}
-                />
+                createElement(
+                    TextareaControl,
+                    {
+                        label: __('Enter URLs (one per line)', 'rank-math-schema-linker'),
+                        value: linksInput,
+                        onChange: setLinksInput,
+                        rows: 5,
+                        placeholder: "https://example.com",
+                        help: __('Enter complete URLs including https://', 'rank-math-schema-linker')
+                    }
+                ),
                 
-                <Button isPrimary onClick={addLinks}>
-                    {__('Add Links', 'rank-math-schema-linker')}
-                </Button>
+                createElement(
+                    Button,
+                    { 
+                        isPrimary: true, 
+                        onClick: addLinks 
+                    },
+                    __('Add Links', 'rank-math-schema-linker')
+                ),
                 
-                <hr style={{ margin: '20px 0' }} />
+                createElement('hr', { style: { margin: '20px 0' } }),
                 
-                <h3>{__('Current Significant Links', 'rank-math-schema-linker')}</h3>
-                <TextareaControl
-                    value={significantLinks}
-                    onChange={(value) => editPost({ meta: { rank_math_significant_links: value } })}
-                    rows={5}
-                />
+                createElement('h3', {}, __('Current Significant Links', 'rank-math-schema-linker')),
+                createElement(
+                    TextareaControl,
+                    {
+                        value: significantLinks,
+                        onChange: (value) => editPost({ meta: { rank_math_significant_links: value } }),
+                        rows: 5
+                    }
+                ),
                 
-                <h3>{__('Current Related Links', 'rank-math-schema-linker')}</h3>
-                <TextareaControl
-                    value={relatedLinks}
-                    onChange={(value) => editPost({ meta: { rank_math_related_links: value } })}
-                    rows={5}
-                />
-            </PanelBody>
+                createElement('h3', {}, __('Current Related Links', 'rank-math-schema-linker')),
+                createElement(
+                    TextareaControl,
+                    {
+                        value: relatedLinks,
+                        onChange: (value) => editPost({ meta: { rank_math_related_links: value } }),
+                        rows: 5
+                    }
+                )
+            ].filter(Boolean)
         );
     };
 
     const SchemaLinkerSidebar = () => {
-        return (
-            <>
-                <PluginSidebarMoreMenuItem
-                    target="rank-math-schema-linker-sidebar"
-                    icon="admin-links"
-                >
-                    {__('Schema Links', 'rank-math-schema-linker')}
-                </PluginSidebarMoreMenuItem>
-                <PluginSidebar
-                    name="rank-math-schema-linker-sidebar"
-                    title={__('Schema Links', 'rank-math-schema-linker')}
-                    icon="admin-links"
-                >
-                    <SchemaLinkerPanel />
-                </PluginSidebar>
-            </>
-        );
+        return [
+            createElement(
+                PluginSidebarMoreMenuItem,
+                {
+                    target: "rank-math-schema-linker-sidebar",
+                    icon: "admin-links",
+                    key: "menu-item"
+                },
+                __('Schema Links', 'rank-math-schema-linker')
+            ),
+            createElement(
+                PluginSidebar,
+                {
+                    name: "rank-math-schema-linker-sidebar",
+                    title: __('Schema Links', 'rank-math-schema-linker'),
+                    icon: "admin-links",
+                    key: "sidebar"
+                },
+                createElement(SchemaLinkerPanel, {})
+            )
+        ];
     };
 
     registerPlugin('rank-math-schema-linker', {
