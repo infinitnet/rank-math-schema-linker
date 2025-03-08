@@ -23,13 +23,8 @@ class Rank_Math_Schema_Linker {
         add_action('init', array($this, 'register_meta'));
         add_action('enqueue_block_editor_assets', array($this, 'enqueue_editor_assets'));
         
-        // Hook into Rank Math schema filters for specific entity types
-        add_filter('rank_math/snippet/rich_snippet_webpage_entity', array($this, 'add_links_to_webpage_entity'), 20);
-        
-        // Also hook into the Article entity to catch WebPage entities nested inside
-        add_filter('rank_math/snippet/rich_snippet_article_entity', array($this, 'process_article_entity'), 20);
-        add_filter('rank_math/snippet/rich_snippet_blogposting_entity', array($this, 'process_article_entity'), 20);
-        add_filter('rank_math/snippet/rich_snippet_newsarticle_entity', array($this, 'process_article_entity'), 20);
+        // Hook into the final schema output
+        add_filter('rank_math/json_ld', array($this, 'add_links_to_schema'), 99, 2);
     }
     
     /**
@@ -109,58 +104,51 @@ class Rank_Math_Schema_Linker {
     }
     
     /**
-     * Add links to WebPage schema entity
+     * Add links to schema
      * 
-     * @param array $entity WebPage schema entity
-     * @return array Modified entity
+     * @param array $data Schema data
+     * @param object $jsonld JsonLD object
+     * @return array Modified schema data
      */
-    public function add_links_to_webpage_entity($entity) {
+    public function add_links_to_schema($data, $jsonld) {
         $post_id = get_the_ID();
         if (!$post_id) {
-            return $entity;
+            return $data;
         }
         
         $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
         $related_links = $this->process_links($post_id, 'rank_math_related_links');
         
-        if (!empty($significant_links)) {
-            $entity['significantLink'] = $significant_links;
+        if (empty($significant_links) && empty($related_links)) {
+            return $data;
         }
         
-        if (!empty($related_links)) {
-            $entity['relatedLink'] = $related_links;
-        }
-        
-        return $entity;
-    }
-    
-    /**
-     * Process Article entity to find and modify nested WebPage entity
-     * 
-     * @param array $entity Article schema entity
-     * @return array Modified entity
-     */
-    public function process_article_entity($entity) {
-        // Check if this Article has an isPartOf property with a WebPage
-        if (isset($entity['isPartOf']) && isset($entity['isPartOf']['@type']) && $entity['isPartOf']['@type'] === 'WebPage') {
-            $post_id = get_the_ID();
-            if (!$post_id) {
-                return $entity;
+        // Process each entity in the schema
+        foreach ($data as $entity_id => $entity) {
+            // If this is a WebPage entity, add links directly
+            if (isset($entity['@type']) && $entity['@type'] === 'WebPage') {
+                if (!empty($significant_links)) {
+                    $data[$entity_id]['significantLink'] = $significant_links;
+                }
+                if (!empty($related_links)) {
+                    $data[$entity_id]['relatedLink'] = $related_links;
+                }
             }
             
-            $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
-            $related_links = $this->process_links($post_id, 'rank_math_related_links');
-            
-            if (!empty($significant_links)) {
-                $entity['isPartOf']['significantLink'] = $significant_links;
-            }
-            
-            if (!empty($related_links)) {
-                $entity['isPartOf']['relatedLink'] = $related_links;
+            // If this is an Article with a nested WebPage, add links to the WebPage
+            if (isset($entity['@type']) && in_array($entity['@type'], ['Article', 'BlogPosting', 'NewsArticle']) && 
+                isset($entity['isPartOf']) && isset($entity['isPartOf']['@type']) && $entity['isPartOf']['@type'] === 'WebPage') {
+                
+                if (!empty($significant_links)) {
+                    $data[$entity_id]['isPartOf']['significantLink'] = $significant_links;
+                }
+                if (!empty($related_links)) {
+                    $data[$entity_id]['isPartOf']['relatedLink'] = $related_links;
+                }
             }
         }
         
-        return $entity;
+        return $data;
     }
 }
 
