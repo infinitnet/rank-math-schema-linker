@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Rank Math Schema Linker
  * Description: Adds significant and related links to Rank Math's WebPage schema
- * Version: 1.0.0
- * Author: Your Name
+ * Version: 1.0.1
+ * Author: Infinitnet
  * Text Domain: rank-math-schema-linker
  * License: GPL v2 or later
  */
