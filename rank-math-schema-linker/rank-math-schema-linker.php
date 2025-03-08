@@ -104,8 +104,11 @@ class Rank_Math_Schema_Linker {
      * @return array Modified schema
      */
     public function add_links_to_webpage_schema($schema, $post_id) {
-        // Only modify WebPage schema
-        if (!isset($schema['@type']) || $schema['@type'] !== 'WebPage') {
+        // Define all possible WebPage types
+        $webpage_types = ['WebPage', 'SearchResultsPage', 'ProfilePage', 'CollectionPage', 'AboutPage', 'ContactPage'];
+        
+        // Only modify WebPage schema and its subtypes
+        if (!isset($schema['@type']) || !in_array($schema['@type'], $webpage_types)) {
             return $schema;
         }
         
@@ -139,9 +142,12 @@ class Rank_Math_Schema_Linker {
             return $schema;
         }
         
+        // Define all possible WebPage types
+        $webpage_types = ['WebPage', 'SearchResultsPage', 'ProfilePage', 'CollectionPage', 'AboutPage', 'ContactPage'];
+        
         // Find WebPage entity in the schema graph
         foreach ($schema as $index => $entity) {
-            if (isset($entity['@type']) && $entity['@type'] === 'WebPage') {
+            if (isset($entity['@type']) && in_array($entity['@type'], $webpage_types)) {
                 $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
                 $related_links = $this->process_links($post_id, 'rank_math_related_links');
                 
