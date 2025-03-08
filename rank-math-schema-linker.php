@@ -23,10 +23,13 @@ class Rank_Math_Schema_Linker {
         add_action('init', array($this, 'register_meta'));
         add_action('enqueue_block_editor_assets', array($this, 'enqueue_editor_assets'));
         
-        // Hook into Rank Math schema filters
-        add_filter('rank_math/schema/webpage', array($this, 'add_links_to_webpage_schema'), 20, 2);
-        // Fallback for general schema filter
-        add_filter('rank_math/schema/graph', array($this, 'add_links_to_graph_schema'), 20);
+        // Hook into Rank Math schema filters for specific entity types
+        add_filter('rank_math/snippet/rich_snippet_webpage_entity', array($this, 'add_links_to_webpage_entity'), 20);
+        
+        // Also hook into the Article entity to catch WebPage entities nested inside
+        add_filter('rank_math/snippet/rich_snippet_article_entity', array($this, 'process_article_entity'), 20);
+        add_filter('rank_math/snippet/rich_snippet_blogposting_entity', array($this, 'process_article_entity'), 20);
+        add_filter('rank_math/snippet/rich_snippet_newsarticle_entity', array($this, 'process_article_entity'), 20);
     }
     
     /**
@@ -106,85 +109,58 @@ class Rank_Math_Schema_Linker {
     }
     
     /**
-     * Add links to WebPage schema
+     * Add links to WebPage schema entity
      * 
-     * @param array $schema Schema data
-     * @param int $post_id Post ID
-     * @return array Modified schema
+     * @param array $entity WebPage schema entity
+     * @return array Modified entity
      */
-    public function add_links_to_webpage_schema($schema, $post_id) {
-        // Process the schema recursively
-        return $this->process_schema_recursively($schema, $post_id);
+    public function add_links_to_webpage_entity($entity) {
+        $post_id = get_the_ID();
+        if (!$post_id) {
+            return $entity;
+        }
+        
+        $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
+        $related_links = $this->process_links($post_id, 'rank_math_related_links');
+        
+        if (!empty($significant_links)) {
+            $entity['significantLink'] = $significant_links;
+        }
+        
+        if (!empty($related_links)) {
+            $entity['relatedLink'] = $related_links;
+        }
+        
+        return $entity;
     }
     
     /**
-     * Process schema recursively to find and modify WebPage entities
+     * Process Article entity to find and modify nested WebPage entity
      * 
-     * @param array $schema Schema data
-     * @param int $post_id Post ID
-     * @return array Modified schema
+     * @param array $entity Article schema entity
+     * @return array Modified entity
      */
-    private function process_schema_recursively($schema, $post_id) {
-        // Define all possible WebPage types
-        $webpage_types = ['WebPage', 'SearchResultsPage', 'ProfilePage', 'CollectionPage', 'AboutPage', 'ContactPage'];
-        
-        // If this is a WebPage entity, add the links
-        if (isset($schema['@type']) && in_array($schema['@type'], $webpage_types)) {
+    public function process_article_entity($entity) {
+        // Check if this Article has an isPartOf property with a WebPage
+        if (isset($entity['isPartOf']) && isset($entity['isPartOf']['@type']) && $entity['isPartOf']['@type'] === 'WebPage') {
+            $post_id = get_the_ID();
+            if (!$post_id) {
+                return $entity;
+            }
+            
             $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
             $related_links = $this->process_links($post_id, 'rank_math_related_links');
             
             if (!empty($significant_links)) {
-                $schema['significantLink'] = $significant_links;
+                $entity['isPartOf']['significantLink'] = $significant_links;
             }
             
             if (!empty($related_links)) {
-                $schema['relatedLink'] = $related_links;
+                $entity['isPartOf']['relatedLink'] = $related_links;
             }
         }
         
-        // Process all properties recursively
-        foreach ($schema as $key => $value) {
-            if (is_array($value)) {
-                // If this is an object (associative array)
-                if (isset($value['@type'])) {
-                    $schema[$key] = $this->process_schema_recursively($value, $post_id);
-                } 
-                // If this is an array of objects
-                else if (is_array($value) && !empty($value)) {
-                    foreach ($value as $index => $item) {
-                        if (is_array($item) && isset($item['@type'])) {
-                            $schema[$key][$index] = $this->process_schema_recursively($item, $post_id);
-                        }
-                    }
-                }
-            }
-        }
-        
-        return $schema;
-    }
-    
-    /**
-     * Add links to general graph schema as fallback
-     * 
-     * @param array $schema Schema data
-     * @return array Modified schema
-     */
-    public function add_links_to_graph_schema($schema) {
-        if (!is_array($schema)) {
-            return $schema;
-        }
-        
-        $post_id = get_the_ID();
-        if (!$post_id) {
-            return $schema;
-        }
-        
-        // Process each entity in the schema graph
-        foreach ($schema as $index => $entity) {
-            $schema[$index] = $this->process_schema_recursively($entity, $post_id);
-        }
-        
-        return $schema;
+        return $entity;
     }
 }
 
