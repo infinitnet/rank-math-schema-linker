@@ -178,25 +178,141 @@
                 
                 createElement('hr', { style: { margin: '20px 0' } }),
                 
-                createElement('h3', {}, __('Current Significant Links', 'rank-math-schema-linker')),
+                // Significant Links section with header and Remove All button
                 createElement(
-                    TextareaControl,
-                    {
-                        value: significantLinks,
-                        onChange: (value) => editPost({ meta: { rank_math_significant_links: value } }),
-                        rows: 5
-                    }
+                    'div',
+                    { className: 'rank-math-schema-links-header' },
+                    [
+                        createElement('h3', {}, __('Current Significant Links', 'rank-math-schema-linker')),
+                        significantLinks && significantLinks.split('\n').filter(link => link.trim()).length > 0 
+                            ? createElement(
+                                Button,
+                                {
+                                    isDestructive: true,
+                                    isSmall: true,
+                                    onClick: () => {
+                                        if (confirm(__('Are you sure you want to remove all significant links?', 'rank-math-schema-linker'))) {
+                                            editPost({ meta: { rank_math_significant_links: '' } });
+                                            setNotice({
+                                                show: true,
+                                                message: __('All significant links removed.', 'rank-math-schema-linker'),
+                                                type: 'success'
+                                            });
+                                        }
+                                    }
+                                },
+                                __('Remove All', 'rank-math-schema-linker')
+                            )
+                            : null
+                    ]
                 ),
-                
-                createElement('h3', {}, __('Current Related Links', 'rank-math-schema-linker')),
+
+                // Significant Links list
+                significantLinks && significantLinks.split('\n').filter(link => link.trim()).length > 0 
+                    ? createElement(
+                        'ul',
+                        { className: 'rank-math-schema-links-list' },
+                        significantLinks.split('\n')
+                            .filter(link => link.trim())
+                            .map((link, index) => createElement(
+                                'li',
+                                { key: `significant-${index}`, className: 'rank-math-schema-link-item' },
+                                [
+                                    createElement(
+                                        'span',
+                                        { className: 'rank-math-schema-link-url' },
+                                        link
+                                    ),
+                                    createElement(
+                                        Button,
+                                        { 
+                                            isDestructive: true,
+                                            isSmall: true,
+                                            onClick: () => {
+                                                const links = significantLinks.split('\n').filter(l => l.trim());
+                                                links.splice(index, 1);
+                                                editPost({ meta: { rank_math_significant_links: links.join('\n') } });
+                                            },
+                                            icon: 'trash',
+                                            label: __('Remove link', 'rank-math-schema-linker')
+                                        }
+                                    )
+                                ]
+                            ))
+                    )
+                    : createElement(
+                        'p',
+                        { className: 'rank-math-schema-no-links' },
+                        __('No significant links added yet.', 'rank-math-schema-linker')
+                    ),
+                    
+                // Related Links section with header and Remove All button
                 createElement(
-                    TextareaControl,
-                    {
-                        value: relatedLinks,
-                        onChange: (value) => editPost({ meta: { rank_math_related_links: value } }),
-                        rows: 5
-                    }
-                )
+                    'div',
+                    { className: 'rank-math-schema-links-header' },
+                    [
+                        createElement('h3', {}, __('Current Related Links', 'rank-math-schema-linker')),
+                        relatedLinks && relatedLinks.split('\n').filter(link => link.trim()).length > 0 
+                            ? createElement(
+                                Button,
+                                {
+                                    isDestructive: true,
+                                    isSmall: true,
+                                    onClick: () => {
+                                        if (confirm(__('Are you sure you want to remove all related links?', 'rank-math-schema-linker'))) {
+                                            editPost({ meta: { rank_math_related_links: '' } });
+                                            setNotice({
+                                                show: true,
+                                                message: __('All related links removed.', 'rank-math-schema-linker'),
+                                                type: 'success'
+                                            });
+                                        }
+                                    }
+                                },
+                                __('Remove All', 'rank-math-schema-linker')
+                            )
+                            : null
+                    ]
+                ),
+
+                // Related Links list
+                relatedLinks && relatedLinks.split('\n').filter(link => link.trim()).length > 0
+                    ? createElement(
+                        'ul',
+                        { className: 'rank-math-schema-links-list' },
+                        relatedLinks.split('\n')
+                            .filter(link => link.trim())
+                            .map((link, index) => createElement(
+                                'li',
+                                { key: `related-${index}`, className: 'rank-math-schema-link-item' },
+                                [
+                                    createElement(
+                                        'span',
+                                        { className: 'rank-math-schema-link-url' },
+                                        link
+                                    ),
+                                    createElement(
+                                        Button,
+                                        { 
+                                            isDestructive: true,
+                                            isSmall: true,
+                                            onClick: () => {
+                                                const links = relatedLinks.split('\n').filter(l => l.trim());
+                                                links.splice(index, 1);
+                                                editPost({ meta: { rank_math_related_links: links.join('\n') } });
+                                            },
+                                            icon: 'trash',
+                                            label: __('Remove link', 'rank-math-schema-linker')
+                                        }
+                                    )
+                                ]
+                            ))
+                    )
+                    : createElement(
+                        'p',
+                        { className: 'rank-math-schema-no-links' },
+                        __('No related links added yet.', 'rank-math-schema-linker')
+                    )
             ].filter(Boolean)
         );
     };

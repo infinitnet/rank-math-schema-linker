@@ -1,0 +1,31 @@
+.rank-math-schema-links-list {
+    margin: 0;
+    padding: 0;
+}
+.rank-math-schema-link-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+.rank-math-schema-link-item:last-child {
+    border-bottom: none;
+}
+.rank-math-schema-link-url {
+    word-break: break-all;
+    margin-right: 10px;
+}
+.rank-math-schema-no-links {
+    color: #757575;
+    font-style: italic;
+}
+.rank-math-schema-links-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.rank-math-schema-links-header h3 {
+    margin: 0;
+}

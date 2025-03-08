@@ -62,12 +62,21 @@ class Rank_Math_Schema_Linker {
      * Enqueue assets for the block editor
      */
     public function enqueue_editor_assets() {
+        // Enqueue JS
         wp_enqueue_script(
             'rank-math-schema-linker',
             plugins_url('/js/schema-linker.js', __FILE__),
             array('wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data', 'wp-plugins', 'wp-i18n'),
             filemtime(plugin_dir_path(__FILE__) . 'js/schema-linker.js'),
             true
+        );
+        
+        // Enqueue CSS
+        wp_enqueue_style(
+            'rank-math-schema-linker',
+            plugins_url('/css/schema-linker.css', __FILE__),
+            array(),
+            filemtime(plugin_dir_path(__FILE__) . 'css/schema-linker.css')
         );
         
         // Add inline translations
