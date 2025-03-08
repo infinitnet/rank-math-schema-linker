@@ -113,23 +113,51 @@ class Rank_Math_Schema_Linker {
      * @return array Modified schema
      */
     public function add_links_to_webpage_schema($schema, $post_id) {
+        // Process the schema recursively
+        return $this->process_schema_recursively($schema, $post_id);
+    }
+    
+    /**
+     * Process schema recursively to find and modify WebPage entities
+     * 
+     * @param array $schema Schema data
+     * @param int $post_id Post ID
+     * @return array Modified schema
+     */
+    private function process_schema_recursively($schema, $post_id) {
         // Define all possible WebPage types
         $webpage_types = ['WebPage', 'SearchResultsPage', 'ProfilePage', 'CollectionPage', 'AboutPage', 'ContactPage'];
         
-        // Only modify WebPage schema and its subtypes
-        if (!isset($schema['@type']) || !in_array($schema['@type'], $webpage_types)) {
-            return $schema;
+        // If this is a WebPage entity, add the links
+        if (isset($schema['@type']) && in_array($schema['@type'], $webpage_types)) {
+            $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
+            $related_links = $this->process_links($post_id, 'rank_math_related_links');
+            
+            if (!empty($significant_links)) {
+                $schema['significantLink'] = $significant_links;
+            }
+            
+            if (!empty($related_links)) {
+                $schema['relatedLink'] = $related_links;
+            }
         }
         
-        $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
-        $related_links = $this->process_links($post_id, 'rank_math_related_links');
-        
-        if (!empty($significant_links)) {
-            $schema['significantLink'] = $significant_links;
-        }
-        
-        if (!empty($related_links)) {
-            $schema['relatedLink'] = $related_links;
+        // Process all properties recursively
+        foreach ($schema as $key => $value) {
+            if (is_array($value)) {
+                // If this is an object (associative array)
+                if (isset($value['@type'])) {
+                    $schema[$key] = $this->process_schema_recursively($value, $post_id);
+                } 
+                // If this is an array of objects
+                else if (is_array($value) && !empty($value)) {
+                    foreach ($value as $index => $item) {
+                        if (is_array($item) && isset($item['@type'])) {
+                            $schema[$key][$index] = $this->process_schema_recursively($item, $post_id);
+                        }
+                    }
+                }
+            }
         }
         
         return $schema;
@@ -151,25 +179,9 @@ class Rank_Math_Schema_Linker {
             return $schema;
         }
         
-        // Define all possible WebPage types
-        $webpage_types = ['WebPage', 'SearchResultsPage', 'ProfilePage', 'CollectionPage', 'AboutPage', 'ContactPage'];
-        
-        // Find WebPage entity in the schema graph
+        // Process each entity in the schema graph
         foreach ($schema as $index => $entity) {
-            if (isset($entity['@type']) && in_array($entity['@type'], $webpage_types)) {
-                $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
-                $related_links = $this->process_links($post_id, 'rank_math_related_links');
-                
-                if (!empty($significant_links)) {
-                    $schema[$index]['significantLink'] = $significant_links;
-                }
-                
-                if (!empty($related_links)) {
-                    $schema[$index]['relatedLink'] = $related_links;
-                }
-                
-                break;
-            }
+            $schema[$index] = $this->process_schema_recursively($entity, $post_id);
         }
         
         return $schema;
