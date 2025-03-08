@@ -1,6 +1,6 @@
 (function(wp) {
     const { registerPlugin } = wp.plugins;
-    const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editPost;
+    const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editor;
     const { PanelBody, TextareaControl, RadioControl, Button, Notice } = wp.components;
     const { useSelect, useDispatch } = wp.data;
     const { useState, useEffect } = wp.element;

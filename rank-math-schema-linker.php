@@ -65,7 +65,7 @@ class Rank_Math_Schema_Linker {
         wp_enqueue_script(
             'rank-math-schema-linker',
             plugins_url('/js/schema-linker.js', __FILE__),
-            array('wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post', 'wp-i18n'),
+            array('wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data', 'wp-plugins', 'wp-i18n'),
             filemtime(plugin_dir_path(__FILE__) . 'js/schema-linker.js'),
             true
         );
