@@ -220,11 +220,11 @@ class Schema_Link_Manager_Admin {
                 add_filter('posts_where', array($this, 'filter_posts_by_permalink'));
                 $this->search_permalink_term = $search; // Store search term for the filter
             } elseif ($search_column === 'all') {
-                // Search in title, content AND meta (schema links)
-                $args['s'] = $search; // This will search in title and content
+                // Create a main query for searching in title and content
+                $args['s'] = $search;
                 
-                // Also search in meta (schema links)
-                $args['meta_query'] = array(
+                // Create a meta query for schema links
+                $meta_query = array(
                     'relation' => 'OR',
                     array(
                         'key' => 'schema_significant_links',
@@ -237,6 +237,17 @@ class Schema_Link_Manager_Admin {
                         'compare' => 'LIKE',
                     ),
                 );
+                
+                // Add the meta query to the main args
+                if (isset($args['meta_query'])) {
+                    $args['meta_query'] = array_merge(
+                        array('relation' => 'OR'),
+                        array($args['meta_query']),
+                        array($meta_query)
+                    );
+                } else {
+                    $args['meta_query'] = $meta_query;
+                }
                 
                 // For URL, we'll use the custom filter
                 add_filter('posts_where', array($this, 'filter_posts_by_permalink'));
@@ -388,10 +399,10 @@ class Schema_Link_Manager_Admin {
             // Escape the search term for SQL
             $search_term = '%' . $wpdb->esc_like($this->search_permalink_term) . '%';
             
-            // Add permalink search to WHERE clause
+            // Add permalink search to WHERE clause with proper grouping to preserve other filters
             // We have to search in post_name (slug) and guid which contains the original URL
             $where .= $wpdb->prepare(
-                " OR ($wpdb->posts.post_name LIKE %s OR $wpdb->posts.guid LIKE %s)",
+                " OR (($wpdb->posts.post_name LIKE %s OR $wpdb->posts.guid LIKE %s) AND $wpdb->posts.post_type IN (SELECT post_type FROM $wpdb->posts WHERE 1=1" . str_replace("$wpdb->posts.post_type", "post_type", $where) . "))",
                 $search_term,
                 $search_term
             );
