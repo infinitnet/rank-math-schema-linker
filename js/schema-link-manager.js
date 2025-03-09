@@ -28,8 +28,10 @@
 
         // Check if Rank Math is active
         const isRankMathActive = useSelect(select => {
-            // This is a simple check - in a real plugin you might want to check more thoroughly
-            return true; // Placeholder - would need actual detection logic
+            // Check for Rank Math schema global variable which would indicate the plugin is active
+            return typeof window.rankMath !== 'undefined' ||
+                   typeof window.rankMathSchema !== 'undefined' ||
+                   document.querySelector('meta[property="rank_math:version"]') !== null;
         }, []);
 
         // Handle adding links
@@ -249,7 +251,7 @@
                 // Related Links section with header and Remove All button
                 createElement(
                     'div',
-                    { className: 'rank-math-schema-links-header' },
+                    { className: 'schema-links-header' },
                     [
                         createElement('h3', {}, __('Current Related Links', 'schema-link-manager')),
                         relatedLinks && relatedLinks.split('\n').filter(link => link.trim()).length > 0 
@@ -279,7 +281,7 @@
                 relatedLinks && relatedLinks.split('\n').filter(link => link.trim()).length > 0
                     ? createElement(
                         'ul',
-                        { className: 'rank-math-schema-links-list' },
+                        { className: 'schema-links-list' },
                         relatedLinks.split('\n')
                             .filter(link => link.trim())
                             .map((link, index) => createElement(

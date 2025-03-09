@@ -233,9 +233,19 @@ class Schema_Link_Manager {
             return;
         }
         
-        // Use output buffering just for this specific action
+        // Start output buffering
         ob_start();
-        echo $this->inject_links_into_json_ld(ob_get_clean());
+        
+        // Get the current buffer contents and pass it to inject_links_into_json_ld
+        $self = $this;
+        add_action('wp_footer', function() use ($self) {
+            // Get current buffer
+            $content = ob_get_contents();
+            // Clean the buffer
+            ob_clean();
+            // Output modified content
+            echo $self->inject_links_into_json_ld($content);
+        }, 999);
     }
 
     /**
