@@ -51,6 +51,16 @@
             $(this).find('input[name="paged"]').val(1);
         });
         
+        // Enhance filter dropdowns with select2
+        if ($.fn.select2) {
+            $('#post_type, #category, #search_column, #per_page').select2({
+                minimumResultsForSearch: 10,
+                width: '100%'
+            });
+        }
+        
+        // Handle table sorting - already set up with URL parameters in template
+        
         // Add link functionality
         $('.schema-link-manager-table').on('click', '.add-link-button', function() {
             const row = $(this).closest('tr');

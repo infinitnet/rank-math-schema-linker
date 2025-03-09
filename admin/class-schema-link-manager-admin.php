@@ -54,11 +54,30 @@ class Schema_Link_Manager_Admin {
             return;
         }
         
+        // Enqueue WordPress dashicons
+        wp_enqueue_style('dashicons');
+        
+        // Enqueue Select2 CSS and JS (from local plugin files)
+        wp_enqueue_style(
+            'select2',
+            plugins_url('/css/select2.min.css', dirname(__FILE__)),
+            array(),
+            '4.1.0-rc.0'
+        );
+        
+        wp_enqueue_script(
+            'select2',
+            plugins_url('/js/select2.min.js', dirname(__FILE__)),
+            array('jquery'),
+            '4.1.0-rc.0',
+            true
+        );
+        
         // Enqueue admin CSS
         wp_enqueue_style(
             'schema-link-manager-admin',
             plugins_url('/css/schema-link-manager-admin.css', dirname(__FILE__)),
-            array(),
+            array('select2'),
             filemtime(plugin_dir_path(dirname(__FILE__)) . 'css/schema-link-manager-admin.css')
         );
         
@@ -66,7 +85,7 @@ class Schema_Link_Manager_Admin {
         wp_enqueue_script(
             'schema-link-manager-admin',
             plugins_url('/js/schema-link-manager-admin.js', dirname(__FILE__)),
-            array('jquery'),
+            array('jquery', 'select2'),
             filemtime(plugin_dir_path(dirname(__FILE__)) . 'js/schema-link-manager-admin.js'),
             true
         );
@@ -103,12 +122,18 @@ class Schema_Link_Manager_Admin {
         $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
         $search_column = isset($_GET['search_column']) ? sanitize_key($_GET['search_column']) : 'all';
         $post_type = isset($_GET['post_type']) ? sanitize_key($_GET['post_type']) : 'all';
+        $category = isset($_GET['category']) ? sanitize_key($_GET['category']) : 'all';
+        $orderby = isset($_GET['orderby']) ? sanitize_key($_GET['orderby']) : 'title';
+        $order = isset($_GET['order']) ? sanitize_key($_GET['order']) : 'asc';
         
         // Get available post types
         $post_types = $this->get_available_post_types();
         
+        // Get available categories
+        $categories = get_categories(array('hide_empty' => true));
+        
         // Get posts with pagination
-        $posts_data = $this->get_posts_with_schema_data($current_page, $posts_per_page, $search_term, $search_column, $post_type);
+        $posts_data = $this->get_posts_with_schema_data($current_page, $posts_per_page, $search_term, $search_column, $post_type, $category, $orderby, $order);
         
         // Calculate pagination
         $total_posts = $posts_data['total'];
@@ -144,15 +169,26 @@ class Schema_Link_Manager_Admin {
      * @param string $post_type Post type to filter
      * @return array Posts data with pagination info
      */
-    private function get_posts_with_schema_data($page = 1, $per_page = 20, $search = '', $search_column = 'all', $post_type = 'all') {
+    private function get_posts_with_schema_data($page = 1, $per_page = 20, $search = '', $search_column = 'all', $post_type = 'all', $category = '', $orderby = 'title', $order = 'ASC') {
         $args = array(
             'post_type' => $post_type !== 'all' ? $post_type : get_post_types(array('public' => true)),
             'post_status' => 'publish',
             'posts_per_page' => $per_page,
             'paged' => $page,
-            'orderby' => 'title',
-            'order' => 'ASC',
+            'orderby' => $orderby === 'type' ? 'post_type' : ($orderby === 'url' ? 'name' : 'title'),
+            'order' => in_array(strtoupper($order), array('ASC', 'DESC')) ? strtoupper($order) : 'ASC',
         );
+        
+        // Add category filter if selected
+        if (!empty($category) && $category !== 'all') {
+            $args['tax_query'] = array(
+                array(
+                    'taxonomy' => 'category',
+                    'field'    => 'slug',
+                    'terms'    => $category,
+                ),
+            );
+        }
         
         // Add search parameters
         if (!empty($search)) {
