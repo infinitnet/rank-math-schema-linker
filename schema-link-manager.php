@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Schema Link Manager
- * Description: Adds significant and related links to Rank Math's WebPage schema
+ * Description: Adds and manages significant and related links to JSON-LD WebPage schema
  * Version: 1.0.7
  * Author: Infinitnet
  * Text Domain: schema-link-manager
