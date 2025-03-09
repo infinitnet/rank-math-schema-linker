@@ -4,8 +4,9 @@
  * Description: Adds and manages significant and related links to JSON-LD WebPage schema
  * Version: 1.0.7
  * Author: Infinitnet
+ * Author URI: https://infinitnet.io/
+ * License: GPLv3
  * Text Domain: schema-link-manager
- * License: GPL v2 or later
  */
 
 // Exit if accessed directly
