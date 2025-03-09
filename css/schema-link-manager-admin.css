@@ -1,6 +1,47 @@
 /* Schema Link Manager Admin Styles */
 .schema-link-manager-admin {
     margin: 20px 0;
+    position: relative;
+}
+
+/* Notifications */
+.schema-notification {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    max-width: 300px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-size: 14px;
+    z-index: 9999;
+    transition: all 0.3s ease;
+    transform: translateY(-10px);
+    opacity: 0;
+}
+
+.schema-notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.schema-notification-success {
+    background-color: #46b450;
+    color: white;
+    border-left: 4px solid #2e8540;
+}
+
+.schema-notification-error {
+    background-color: #dc3232;
+    color: white;
+    border-left: 4px solid #a00;
+}
+
+.schema-notification-warning {
+    background-color: #ffb900;
+    color: #32373c;
+    border-left: 4px solid #f56e28;
 }
 
 /* Filters */
