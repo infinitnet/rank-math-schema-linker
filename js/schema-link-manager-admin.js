@@ -61,7 +61,7 @@
         
         // Handle table sorting - already set up with URL parameters in template
         
-        // Add link functionality
+        // Single link addition
         $('.schema-link-manager-table').on('click', '.add-link-button', function() {
             const row = $(this).closest('tr');
             const postId = row.data('post-id');
@@ -79,6 +79,111 @@
                 return;
             }
             
+            addSingleLink(row, postId, linkType, linkUrl);
+        });
+        
+        // Bulk links addition
+        $('.schema-link-manager-table').on('click', '.add-bulk-links-button', function() {
+            const row = $(this).closest('tr');
+            const postId = row.data('post-id');
+            const linkType = row.find('.link-type-select').val();
+            const linksText = row.find('.bulk-links-input').val().trim();
+            
+            if (!linksText) {
+                showNotification('Please enter at least one URL', 'error');
+                return;
+            }
+            
+            // Split by newlines and process
+            const links = linksText.split('\n').map(link => link.trim()).filter(link => link);
+            
+            if (links.length === 0) {
+                showNotification('Please enter at least one URL', 'error');
+                return;
+            }
+            
+            // Validate URLs
+            const validLinks = links.filter(link => link.match(/^(https?:\/\/)/i));
+            
+            if (validLinks.length === 0) {
+                showNotification('No valid URLs found. URLs must start with http:// or https://', 'error');
+                return;
+            }
+            
+            if (validLinks.length !== links.length) {
+                showNotification('Some URLs were invalid and will be skipped.', 'warning');
+            }
+            
+            // Disable button during operation
+            const bulkAddButton = $(this);
+            bulkAddButton.prop('disabled', true).text('Adding...');
+            
+            // Process links sequentially
+            let processedCount = 0;
+            let successCount = 0;
+            
+            function processNextLink(index) {
+                if (index >= validLinks.length) {
+                    // All links processed
+                    bulkAddButton.prop('disabled', false).text('Add All');
+                    row.find('.bulk-links-input').val('');
+                    
+                    if (successCount > 0) {
+                        showNotification(`Added ${successCount} links successfully!`, 'success');
+                    } else {
+                        showNotification('No new links were added. They may already exist.', 'warning');
+                    }
+                    return;
+                }
+                
+                const link = validLinks[index];
+                
+                // Send AJAX request
+                $.ajax({
+                    url: schemaLinkManager.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'schema_link_manager_update',
+                        nonce: schemaLinkManager.nonce,
+                        post_id: postId,
+                        link_type: linkType,
+                        action_type: 'add',
+                        link: link
+                    },
+                    success: function(response) {
+                        processedCount++;
+                        
+                        if (response.success) {
+                            successCount++;
+                            
+                            // Update the UI with the new link
+                            updateLinksList(row, linkType, link);
+                        }
+                        
+                        // Process next link
+                        processNextLink(index + 1);
+                    },
+                    error: function() {
+                        processedCount++;
+                        // Continue with next link even if there's an error
+                        processNextLink(index + 1);
+                    }
+                });
+            }
+            
+            // Start processing
+            processNextLink(0);
+        });
+        
+        /**
+         * Add a single link to the schema
+         *
+         * @param {jQuery} row The table row element
+         * @param {number} postId The post ID
+         * @param {string} linkType The link type (significant or related)
+         * @param {string} linkUrl The URL to add
+         */
+        function addSingleLink(row, postId, linkType, linkUrl) {
             // Send AJAX request
             $.ajax({
                 url: schemaLinkManager.ajaxUrl,
@@ -100,40 +205,7 @@
                         row.find('.new-link-input').val('');
                         
                         // Update the links list
-                        const linksContainer = row.find(`.column-${linkType}-links .schema-links-container`);
-                        const linksList = linksContainer.find('.schema-links-list');
-                        
-                        if (linksList.length === 0) {
-                            // Create new list if it doesn't exist
-                            linksContainer.empty().append(
-                                $('<ul>', {
-                                    class: `schema-links-list ${linkType}-links`
-                                })
-                            );
-                        }
-                        
-                        // Add the new link to the list
-                        const newLinkItem = $('<li>', {
-                            class: 'schema-link-item'
-                        }).append(
-                            $('<span>', {
-                                class: 'link-url',
-                                text: linkUrl
-                            }),
-                            $('<button>', {
-                                type: 'button',
-                                class: 'remove-link',
-                                'data-link-type': linkType,
-                                'data-link': linkUrl
-                            }).append(
-                                $('<span>', {
-                                    class: 'dashicons dashicons-trash'
-                                })
-                            )
-                        );
-                        
-                        linksContainer.find('.schema-links-list').append(newLinkItem);
-                        linksContainer.find('.no-links').remove();
+                        updateLinksList(row, linkType, linkUrl);
                         
                         // Show success message
                         showNotification(schemaLinkManager.strings.linkAdded, 'success');
@@ -148,7 +220,51 @@
                     row.find('.add-link-button').prop('disabled', false).text('Add');
                 }
             });
-        });
+        }
+        
+        /**
+         * Update the links list in the UI
+         *
+         * @param {jQuery} row The table row element
+         * @param {string} linkType The link type (significant or related)
+         * @param {string} linkUrl The URL to add
+         */
+        function updateLinksList(row, linkType, linkUrl) {
+            const linksContainer = row.find(`.column-${linkType}-links .schema-links-container`);
+            const linksList = linksContainer.find('.schema-links-list');
+            
+            if (linksList.length === 0) {
+                // Create new list if it doesn't exist
+                linksContainer.empty().append(
+                    $('<ul>', {
+                        class: `schema-links-list ${linkType}-links`
+                    })
+                );
+            }
+            
+            // Add the new link to the list
+            const newLinkItem = $('<li>', {
+                class: 'schema-link-item'
+            }).append(
+                $('<span>', {
+                    class: 'link-url',
+                    text: linkUrl
+                }),
+                $('<button>', {
+                    type: 'button',
+                    class: 'remove-link',
+                    'data-link-type': linkType,
+                    'data-link': linkUrl
+                }).append(
+                    $('<span>', {
+                        class: 'dashicons dashicons-trash'
+                    })
+                )
+            );
+            
+            linksContainer.find('.schema-links-list').append(newLinkItem);
+            linksContainer.find('.no-links').remove();
+        }
         
         // Remove individual link
         $('.schema-link-manager-table').on('click', '.remove-link', function() {

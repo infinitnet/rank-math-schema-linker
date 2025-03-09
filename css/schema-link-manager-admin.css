@@ -277,18 +277,87 @@
     flex-direction: column;
     gap: 10px;
 }
-
 .add-link-form {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 5px;
     margin-bottom: 10px;
 }
 
-.add-link-form select,
-.add-link-form input {
+.add-link-form select {
     flex: 1;
     min-width: 100px;
+}
+
+.add-link-tabs {
+    display: flex;
+    margin: 5px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.link-tab-button {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 2px;
+    color: #555;
+}
+
+.link-tab-button.active {
+    background: #fff;
+    color: #000;
+    position: relative;
+}
+
+.link-tab-button.active:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #fff;
+}
+
+.link-input-containers {
+    position: relative;
+}
+
+.link-input-container {
+    display: none;
+    padding: 10px 0;
+}
+
+.link-input-container.active {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.single-link-container input {
+    flex: 1;
+    min-width: 100px;
+}
+
+.bulk-link-container {
+    flex-direction: column;
+}
+
+.bulk-links-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    margin-bottom: 5px;
+}
+
+.bulk-input-help {
+    font-size: 11px;
+    font-style: italic;
+    color: #666;
+    margin-bottom: 5px;
 }
 
 .remove-all-links {

@@ -184,8 +184,21 @@ if (!defined('ABSPATH')) {
                                             <option value="significant"><?php _e('Significant', 'schema-link-manager'); ?></option>
                                             <option value="related"><?php _e('Related', 'schema-link-manager'); ?></option>
                                         </select>
-                                        <input type="url" class="new-link-input" placeholder="<?php esc_attr_e('https://example.com', 'schema-link-manager'); ?>">
-                                        <button type="button" class="button add-link-button"><?php _e('Add', 'schema-link-manager'); ?></button>
+                                        <div class="add-link-tabs">
+                                            <button type="button" class="link-tab-button active" data-tab="single"><?php _e('Single', 'schema-link-manager'); ?></button>
+                                            <button type="button" class="link-tab-button" data-tab="bulk"><?php _e('Bulk', 'schema-link-manager'); ?></button>
+                                        </div>
+                                        <div class="link-input-containers">
+                                            <div class="link-input-container single-link-container active">
+                                                <input type="url" class="new-link-input" placeholder="<?php esc_attr_e('https://example.com', 'schema-link-manager'); ?>">
+                                                <button type="button" class="button add-link-button"><?php _e('Add', 'schema-link-manager'); ?></button>
+                                            </div>
+                                            <div class="link-input-container bulk-link-container">
+                                                <textarea class="bulk-links-input" placeholder="<?php esc_attr_e('https://example.com\nhttps://another-example.com', 'schema-link-manager'); ?>" rows="4"></textarea>
+                                                <div class="bulk-input-help"><?php _e('Enter one URL per line', 'schema-link-manager'); ?></div>
+                                                <button type="button" class="button add-bulk-links-button"><?php _e('Add All', 'schema-link-manager'); ?></button>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="remove-all-links">
                                         <button type="button" class="button remove-significant-links" data-link-type="significant">
