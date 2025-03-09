@@ -171,13 +171,19 @@ class Schema_Link_Manager_Admin {
      */
     private function get_posts_with_schema_data($page = 1, $per_page = 20, $search = '', $search_column = 'all', $post_type = 'all', $category = '', $orderby = 'title', $order = 'ASC') {
         $args = array(
-            'post_type' => $post_type !== 'all' ? $post_type : get_post_types(array('public' => true)),
             'post_status' => 'publish',
             'posts_per_page' => $per_page,
             'paged' => $page,
             'orderby' => $orderby === 'type' ? 'post_type' : ($orderby === 'url' ? 'name' : 'title'),
             'order' => in_array(strtoupper($order), array('ASC', 'DESC')) ? strtoupper($order) : 'ASC',
         );
+        
+        // Handle post type filtering - fix for post type filter not working
+        if ($post_type === 'all') {
+            $args['post_type'] = get_post_types(array('public' => true));
+        } else {
+            $args['post_type'] = $post_type;
+        }
         
         // Add category filter if selected
         if (!empty($category) && $category !== 'all') {
