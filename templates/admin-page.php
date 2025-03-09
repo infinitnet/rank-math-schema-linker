@@ -194,7 +194,8 @@ if (!defined('ABSPATH')) {
                                                 <button type="button" class="button add-link-button"><?php _e('Add', 'schema-link-manager'); ?></button>
                                             </div>
                                             <div class="link-input-container bulk-link-container">
-                                                <textarea class="bulk-links-input" placeholder="<?php esc_attr_e('https://example.com\nhttps://another-example.com', 'schema-link-manager'); ?>" rows="4"></textarea>
+                                                <textarea class="bulk-links-input" placeholder="https://example.com
+https://another-example.com" rows="4"></textarea>
                                                 <div class="bulk-input-help"><?php _e('Enter one URL per line', 'schema-link-manager'); ?></div>
                                                 <button type="button" class="button add-bulk-links-button"><?php _e('Add All', 'schema-link-manager'); ?></button>
                                             </div>
