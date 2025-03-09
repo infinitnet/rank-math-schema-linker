@@ -12,8 +12,8 @@
             const { getEditedPostAttribute } = select('core/editor');
             const meta = getEditedPostAttribute('meta') || {};
             return {
-                significantLinks: meta.rank_math_significant_links || '',
-                relatedLinks: meta.rank_math_related_links || '',
+                significantLinks: meta.schema_significant_links || '',
+                relatedLinks: meta.schema_related_links || '',
                 postType: getEditedPostAttribute('type')
             };
         }, []);
@@ -37,7 +37,7 @@
             if (!linksInput.trim()) {
                 setNotice({
                     show: true,
-                    message: __('Please enter at least one URL.', 'rank-math-schema-linker'),
+                    message: __('Please enter at least one URL.', 'schema-link-manager'),
                     type: 'error'
                 });
                 return;
@@ -53,7 +53,7 @@
             if (validLinks.length === 0) {
                 setNotice({
                     show: true,
-                    message: __('No valid URLs found. URLs must start with http:// or https://.', 'rank-math-schema-linker'),
+                    message: __('No valid URLs found. URLs must start with http:// or https://.', 'schema-link-manager'),
                     type: 'error'
                 });
                 return;
@@ -62,13 +62,13 @@
             if (validLinks.length !== links.length) {
                 setNotice({
                     show: true,
-                    message: __('Some URLs were invalid and have been removed.', 'rank-math-schema-linker'),
+                    message: __('Some URLs were invalid and have been removed.', 'schema-link-manager'),
                     type: 'warning'
                 });
             }
 
             const sanitizedLinks = validLinks.join('\n');
-            const metaKey = linkType === 'significant' ? 'rank_math_significant_links' : 'rank_math_related_links';
+            const metaKey = linkType === 'significant' ? 'schema_significant_links' : 'schema_related_links';
             const currentLinks = linkType === 'significant' ? significantLinks : relatedLinks;
             
             // Combine existing links with new ones, avoiding duplicates
@@ -95,7 +95,7 @@
             setLinksInput('');
             setNotice({
                 show: true,
-                message: __('Links added successfully!', 'rank-math-schema-linker'),
+                message: __('Links added successfully!', 'schema-link-manager'),
                 type: 'success'
             });
         };
@@ -117,7 +117,7 @@
                 createElement(
                     Notice,
                     { status: "error", isDismissible: false },
-                    __('Rank Math SEO plugin is required for Schema Linker to work.', 'rank-math-schema-linker')
+                    __('Rank Math SEO plugin is required for Schema Link Manager to work.', 'schema-link-manager')
                 )
             );
         }
@@ -125,7 +125,7 @@
         return createElement(
             PanelBody,
             { 
-                title: __('Add Links to Schema', 'rank-math-schema-linker'), 
+                title: __('Add Links to Schema', 'schema-link-manager'), 
                 initialOpen: true 
             },
             [
@@ -142,28 +142,28 @@
                 createElement(
                     RadioControl,
                     {
-                        label: __('Link Type', 'rank-math-schema-linker'),
+                        label: __('Link Type', 'schema-link-manager'),
                         selected: linkType,
                         options: [
-                            { label: __('Significant Links', 'rank-math-schema-linker'), value: 'significant' },
-                            { label: __('Related Links', 'rank-math-schema-linker'), value: 'related' }
+                            { label: __('Significant Links', 'schema-link-manager'), value: 'significant' },
+                            { label: __('Related Links', 'schema-link-manager'), value: 'related' }
                         ],
                         onChange: setLinkType,
                         help: linkType === 'significant' 
-                            ? __('Important links related to this content', 'rank-math-schema-linker')
-                            : __('Other related content links', 'rank-math-schema-linker')
+                            ? __('Important links related to this content', 'schema-link-manager')
+                            : __('Other related content links', 'schema-link-manager')
                     }
                 ),
                 
                 createElement(
                     TextareaControl,
                     {
-                        label: __('Enter URLs (one per line)', 'rank-math-schema-linker'),
+                        label: __('Enter URLs (one per line)', 'schema-link-manager'),
                         value: linksInput,
                         onChange: setLinksInput,
                         rows: 5,
                         placeholder: "https://example.com",
-                        help: __('Enter complete URLs including https://', 'rank-math-schema-linker')
+                        help: __('Enter complete URLs including https://', 'schema-link-manager')
                     }
                 ),
                 
@@ -173,7 +173,7 @@
                         isPrimary: true, 
                         onClick: addLinks 
                     },
-                    __('Add Links', 'rank-math-schema-linker')
+                    __('Add Links', 'schema-link-manager')
                 ),
                 
                 createElement('hr', { style: { margin: '20px 0' } }),
@@ -181,9 +181,9 @@
                 // Significant Links section with header and Remove All button
                 createElement(
                     'div',
-                    { className: 'rank-math-schema-links-header' },
+                    { className: 'schema-links-header' },
                     [
-                        createElement('h3', {}, __('Current Significant Links', 'rank-math-schema-linker')),
+                        createElement('h3', {}, __('Current Significant Links', 'schema-link-manager')),
                         significantLinks && significantLinks.split('\n').filter(link => link.trim()).length > 0 
                             ? createElement(
                                 Button,
@@ -191,17 +191,17 @@
                                     isDestructive: true,
                                     isSmall: true,
                                     onClick: () => {
-                                        if (confirm(__('Are you sure you want to remove all significant links?', 'rank-math-schema-linker'))) {
-                                            editPost({ meta: { rank_math_significant_links: '' } });
+                                        if (confirm(__('Are you sure you want to remove all significant links?', 'schema-link-manager'))) {
+                                            editPost({ meta: { schema_significant_links: '' } });
                                             setNotice({
                                                 show: true,
-                                                message: __('All significant links removed.', 'rank-math-schema-linker'),
+                                                message: __('All significant links removed.', 'schema-link-manager'),
                                                 type: 'success'
                                             });
                                         }
                                     }
                                 },
-                                __('Remove All', 'rank-math-schema-linker')
+                                __('Remove All', 'schema-link-manager')
                             )
                             : null
                     ]
@@ -211,16 +211,16 @@
                 significantLinks && significantLinks.split('\n').filter(link => link.trim()).length > 0 
                     ? createElement(
                         'ul',
-                        { className: 'rank-math-schema-links-list' },
+                        { className: 'schema-links-list' },
                         significantLinks.split('\n')
                             .filter(link => link.trim())
                             .map((link, index) => createElement(
                                 'li',
-                                { key: `significant-${index}`, className: 'rank-math-schema-link-item' },
+                                { key: `significant-${index}`, className: 'schema-link-item' },
                                 [
                                     createElement(
                                         'span',
-                                        { className: 'rank-math-schema-link-url' },
+                                        { className: 'schema-link-url' },
                                         link
                                     ),
                                     createElement(
@@ -231,10 +231,10 @@
                                             onClick: () => {
                                                 const links = significantLinks.split('\n').filter(l => l.trim());
                                                 links.splice(index, 1);
-                                                editPost({ meta: { rank_math_significant_links: links.join('\n') } });
+                                                editPost({ meta: { schema_significant_links: links.join('\n') } });
                                             },
                                             icon: 'trash',
-                                            label: __('Remove link', 'rank-math-schema-linker')
+                                            label: __('Remove link', 'schema-link-manager')
                                         }
                                     )
                                 ]
@@ -242,8 +242,8 @@
                     )
                     : createElement(
                         'p',
-                        { className: 'rank-math-schema-no-links' },
-                        __('No significant links added yet.', 'rank-math-schema-linker')
+                        { className: 'schema-no-links' },
+                        __('No significant links added yet.', 'schema-link-manager')
                     ),
                     
                 // Related Links section with header and Remove All button
@@ -251,7 +251,7 @@
                     'div',
                     { className: 'rank-math-schema-links-header' },
                     [
-                        createElement('h3', {}, __('Current Related Links', 'rank-math-schema-linker')),
+                        createElement('h3', {}, __('Current Related Links', 'schema-link-manager')),
                         relatedLinks && relatedLinks.split('\n').filter(link => link.trim()).length > 0 
                             ? createElement(
                                 Button,
@@ -259,17 +259,17 @@
                                     isDestructive: true,
                                     isSmall: true,
                                     onClick: () => {
-                                        if (confirm(__('Are you sure you want to remove all related links?', 'rank-math-schema-linker'))) {
-                                            editPost({ meta: { rank_math_related_links: '' } });
+                                        if (confirm(__('Are you sure you want to remove all related links?', 'schema-link-manager'))) {
+                                            editPost({ meta: { schema_related_links: '' } });
                                             setNotice({
                                                 show: true,
-                                                message: __('All related links removed.', 'rank-math-schema-linker'),
+                                                message: __('All related links removed.', 'schema-link-manager'),
                                                 type: 'success'
                                             });
                                         }
                                     }
                                 },
-                                __('Remove All', 'rank-math-schema-linker')
+                                __('Remove All', 'schema-link-manager')
                             )
                             : null
                     ]
@@ -284,11 +284,11 @@
                             .filter(link => link.trim())
                             .map((link, index) => createElement(
                                 'li',
-                                { key: `related-${index}`, className: 'rank-math-schema-link-item' },
+                                { key: `related-${index}`, className: 'schema-link-item' },
                                 [
                                     createElement(
                                         'span',
-                                        { className: 'rank-math-schema-link-url' },
+                                        { className: 'schema-link-url' },
                                         link
                                     ),
                                     createElement(
@@ -299,10 +299,10 @@
                                             onClick: () => {
                                                 const links = relatedLinks.split('\n').filter(l => l.trim());
                                                 links.splice(index, 1);
-                                                editPost({ meta: { rank_math_related_links: links.join('\n') } });
+                                                editPost({ meta: { schema_related_links: links.join('\n') } });
                                             },
                                             icon: 'trash',
-                                            label: __('Remove link', 'rank-math-schema-linker')
+                                            label: __('Remove link', 'schema-link-manager')
                                         }
                                     )
                                 ]
@@ -310,8 +310,8 @@
                     )
                     : createElement(
                         'p',
-                        { className: 'rank-math-schema-no-links' },
-                        __('No related links added yet.', 'rank-math-schema-linker')
+                        { className: 'schema-no-links' },
+                        __('No related links added yet.', 'schema-link-manager')
                     )
             ].filter(Boolean)
         );
@@ -322,17 +322,17 @@
             createElement(
                 PluginSidebarMoreMenuItem,
                 {
-                    target: "rank-math-schema-linker-sidebar",
+                    target: "schema-link-manager-sidebar",
                     icon: "admin-links",
                     key: "menu-item"
                 },
-                __('Schema Links', 'rank-math-schema-linker')
+                __('Schema Links', 'schema-link-manager')
             ),
             createElement(
                 PluginSidebar,
                 {
-                    name: "rank-math-schema-linker-sidebar",
-                    title: __('Schema Links', 'rank-math-schema-linker'),
+                    name: "schema-link-manager-sidebar",
+                    title: __('Schema Links', 'schema-link-manager'),
                     icon: "admin-links",
                     key: "sidebar"
                 },
@@ -341,7 +341,7 @@
         ];
     };
 
-    registerPlugin('rank-math-schema-linker', {
+    registerPlugin('schema-link-manager', {
         render: SchemaLinkerSidebar,
         icon: 'admin-links'
     });

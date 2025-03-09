@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: Rank Math Schema Linker
+ * Plugin Name: Schema Link Manager
  * Description: Adds significant and related links to Rank Math's WebPage schema
  * Version: 1.0.7
  * Author: Infinitnet
- * Text Domain: rank-math-schema-linker
+ * Text Domain: schema-link-manager
  * License: GPL v2 or later
  */
 
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Rank_Math_Schema_Linker {
+class Schema_Link_Manager {
     
     /**
      * Constructor
@@ -34,7 +34,7 @@ class Rank_Math_Schema_Linker {
         $post_types = get_post_types(['public' => true]);
         
         foreach ($post_types as $post_type) {
-            register_post_meta($post_type, 'rank_math_significant_links', array(
+            register_post_meta($post_type, 'schema_significant_links', array(
                 'show_in_rest' => true,
                 'single' => true,
                 'type' => 'string',
@@ -44,7 +44,7 @@ class Rank_Math_Schema_Linker {
                 }
             ));
             
-            register_post_meta($post_type, 'rank_math_related_links', array(
+            register_post_meta($post_type, 'schema_related_links', array(
                 'show_in_rest' => true,
                 'single' => true,
                 'type' => 'string',
@@ -62,23 +62,23 @@ class Rank_Math_Schema_Linker {
     public function enqueue_editor_assets() {
         // Enqueue JS
         wp_enqueue_script(
-            'rank-math-schema-linker',
-            plugins_url('/js/schema-linker.js', __FILE__),
+            'schema-link-manager',
+            plugins_url('/js/schema-link-manager.js', __FILE__),
             array('wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data', 'wp-plugins', 'wp-i18n'),
-            filemtime(plugin_dir_path(__FILE__) . 'js/schema-linker.js'),
+            filemtime(plugin_dir_path(__FILE__) . 'js/schema-link-manager.js'),
             true
         );
         
         // Enqueue CSS
         wp_enqueue_style(
-            'rank-math-schema-linker',
-            plugins_url('/css/schema-linker.css', __FILE__),
+            'schema-link-manager',
+            plugins_url('/css/schema-link-manager.css', __FILE__),
             array(),
-            filemtime(plugin_dir_path(__FILE__) . 'css/schema-linker.css')
+            filemtime(plugin_dir_path(__FILE__) . 'css/schema-link-manager.css')
         );
         
         // Add inline translations
-        wp_set_script_translations('rank-math-schema-linker', 'rank-math-schema-linker');
+        wp_set_script_translations('schema-link-manager', 'schema-link-manager');
     }
     
     /**
@@ -116,8 +116,8 @@ class Rank_Math_Schema_Linker {
             return $data;
         }
         
-        $significant_links = $this->process_links($post_id, 'rank_math_significant_links');
-        $related_links = $this->process_links($post_id, 'rank_math_related_links');
+        $significant_links = $this->process_links($post_id, 'schema_significant_links');
+        $related_links = $this->process_links($post_id, 'schema_related_links');
         
         if (empty($significant_links) && empty($related_links)) {
             return $data;
@@ -153,4 +153,4 @@ class Rank_Math_Schema_Linker {
 }
 
 // Initialize the plugin
-new Rank_Math_Schema_Linker();
+new Schema_Link_Manager();
