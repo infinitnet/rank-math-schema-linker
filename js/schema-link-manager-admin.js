@@ -24,7 +24,7 @@
             $.ajax({
                 url: schemaLinkManager.ajaxUrl,
                 type: 'POST',
-                 {
+                data: {
                     action: 'schema_link_manager_update',
                     nonce: schemaLinkManager.nonce,
                     post_id: postId,
@@ -103,7 +103,7 @@
             $.ajax({
                 url: schemaLinkManager.ajaxUrl,
                 type: 'POST',
-                 {
+                data: {
                     action: 'schema_link_manager_update',
                     nonce: schemaLinkManager.nonce,
                     post_id: postId,
@@ -158,7 +158,7 @@
             $.ajax({
                 url: schemaLinkManager.ajaxUrl,
                 type: 'POST',
-                 {
+                data: {
                     action: 'schema_link_manager_remove_all',
                     nonce: schemaLinkManager.nonce,
                     post_id: postId,
