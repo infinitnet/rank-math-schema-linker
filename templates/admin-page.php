@@ -12,9 +12,11 @@ if (!defined('ABSPATH')) {
     <h1><?php _e('Schema Link Manager', 'schema-link-manager'); ?></h1>
     
     <div class="schema-link-manager-filters">
-        <form method="get">
+        <form method="get" action="<?php echo admin_url('admin.php'); ?>">
             <input type="hidden" name="page" value="schema-link-manager">
             <?php wp_nonce_field('schema_link_manager_filter_nonce', '_wpnonce'); ?>
+            <!-- Always start from page 1 when searching -->
+            <input type="hidden" name="paged" value="1">
             
             <div class="filters-row">
                 <div class="filter-group">

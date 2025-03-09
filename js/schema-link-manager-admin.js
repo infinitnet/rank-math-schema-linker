@@ -2,6 +2,21 @@
     'use strict';
     
     $(document).ready(function() {
+        // Initialize search functionality
+        $('.schema-link-manager-filters form').on('submit', function(event) {
+            // Ensure empty search fields are not included in the URL
+            const searchInput = $(this).find('input[name="s"]');
+            if (searchInput.val().trim() === '') {
+                searchInput.prop('disabled', true);
+                setTimeout(function() {
+                    searchInput.prop('disabled', false);
+                }, 100);
+            }
+            
+            // Reset pagination to page 1 when searching
+            $(this).find('input[name="paged"]').val(1);
+        });
+        
         // Add link functionality
         $('.schema-link-manager-table').on('click', '.add-link-button', function() {
             const row = $(this).closest('tr');

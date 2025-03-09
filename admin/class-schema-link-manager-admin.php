@@ -11,6 +11,12 @@ if (!defined('ABSPATH')) {
 class Schema_Link_Manager_Admin {
     
     /**
+     * Search term for permalink filter
+     * @var string
+     */
+    private $search_permalink_term = '';
+    
+    /**
      * Constructor
      */
     public function __construct() {
@@ -168,8 +174,31 @@ class Schema_Link_Manager_Admin {
             } elseif ($search_column === 'title') {
                 $args['s'] = $search;
             } elseif ($search_column === 'url') {
-                // For URL, we need to search in post name/slug
-                $args['name__like'] = $search;
+                // We need a custom filter to search by permalink
+                add_filter('posts_where', array($this, 'filter_posts_by_permalink'));
+                $this->search_permalink_term = $search; // Store search term for the filter
+            } elseif ($search_column === 'all') {
+                // Search in title, content AND meta (schema links)
+                $args['s'] = $search; // This will search in title and content
+                
+                // Also search in meta (schema links)
+                $args['meta_query'] = array(
+                    'relation' => 'OR',
+                    array(
+                        'key' => 'schema_significant_links',
+                        'value' => $search,
+                        'compare' => 'LIKE',
+                    ),
+                    array(
+                        'key' => 'schema_related_links',
+                        'value' => $search,
+                        'compare' => 'LIKE',
+                    ),
+                );
+                
+                // For URL, we'll use the custom filter
+                add_filter('posts_where', array($this, 'filter_posts_by_permalink'));
+                $this->search_permalink_term = $search; // Store search term for the filter
             } else {
                 // Default to searching in title and content
                 $args['s'] = $search;
@@ -177,6 +206,12 @@ class Schema_Link_Manager_Admin {
         }
         
         $query = new WP_Query($args);
+        
+        // Remove the permalink filter if it was added
+        if (!empty($search) && ($search_column === 'url' || $search_column === 'all')) {
+            remove_filter('posts_where', array($this, 'filter_posts_by_permalink'));
+        }
+        
         $posts = array();
         
         foreach ($query->posts as $post) {
@@ -295,6 +330,32 @@ class Schema_Link_Manager_Admin {
                 'links' => array(),
             ));
         }
+    }
+    
+    /**
+     * Filter posts by permalink
+     * This function is used as a callback for the 'posts_where' filter
+     *
+     * @param string $where The WHERE clause of the query
+     * @return string Modified WHERE clause
+     */
+    public function filter_posts_by_permalink($where) {
+        global $wpdb;
+        
+        if (!empty($this->search_permalink_term)) {
+            // Escape the search term for SQL
+            $search_term = '%' . $wpdb->esc_like($this->search_permalink_term) . '%';
+            
+            // Add permalink search to WHERE clause
+            // We have to search in post_name (slug) and guid which contains the original URL
+            $where .= $wpdb->prepare(
+                " OR ($wpdb->posts.post_name LIKE %s OR $wpdb->posts.guid LIKE %s)",
+                $search_term,
+                $search_term
+            );
+        }
+        
+        return $where;
     }
 }
 
