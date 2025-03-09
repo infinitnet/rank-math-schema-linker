@@ -14,6 +14,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Include admin functionality
+require_once plugin_dir_path(__FILE__) . 'admin/class-schema-link-manager-admin.php';
+
 class Schema_Link_Manager {
     
     /**
