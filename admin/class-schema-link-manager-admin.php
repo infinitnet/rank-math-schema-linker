@@ -17,6 +17,12 @@ class Schema_Link_Manager_Admin {
     private $search_permalink_term = '';
     
     /**
+     * General search term for filters
+     * @var string
+     */
+    private $search_term = '';
+    
+    /**
      * Constructor
      */
     public function __construct() {
@@ -199,7 +205,7 @@ class Schema_Link_Manager_Admin {
         // Add search parameters
         if (!empty($search)) {
             if ($search_column === 'schema_links') {
-                // For schema links, we need to use meta query
+                // For schema links, search in meta fields only
                 $args['meta_query'] = array(
                     'relation' => 'OR',
                     array(
@@ -213,18 +219,32 @@ class Schema_Link_Manager_Admin {
                         'compare' => 'LIKE',
                     ),
                 );
-            } elseif ($search_column === 'title') {
-                $args['s'] = $search;
-            } elseif ($search_column === 'url') {
-                // We need a custom filter to search by permalink
-                add_filter('posts_where', array($this, 'filter_posts_by_permalink'));
-                $this->search_permalink_term = $search; // Store search term for the filter
-            } elseif ($search_column === 'all') {
-                // Create a main query for searching in title and content
-                $args['s'] = $search;
                 
-                // Create a meta query for schema links
-                $meta_query = array(
+                // Disable standard search
+                $args['s'] = '';
+            } elseif ($search_column === 'title') {
+                // For title searches, use a specialized title filter
+                add_filter('posts_where', array($this, 'filter_search_by_title'));
+                $this->search_term = $search;
+                
+                // Disable standard search to prevent it from interfering
+                $args['s'] = '';
+            } elseif ($search_column === 'url') {
+                // For URL searches, use the permalink filter
+                add_filter('posts_where', array($this, 'filter_posts_by_permalink'));
+                $this->search_permalink_term = $search;
+                
+                // Disable standard search
+                $args['s'] = '';
+            } elseif ($search_column === 'all') {
+                // For "all columns" search, we need to combine multiple approaches
+                
+                // 1. Add hook to search in title and content
+                add_filter('posts_where', array($this, 'filter_search_all_content'));
+                $this->search_term = $search;
+                
+                // 2. Add meta query for schema links
+                $args['meta_query'] = array(
                     'relation' => 'OR',
                     array(
                         'key' => 'schema_significant_links',
@@ -238,31 +258,29 @@ class Schema_Link_Manager_Admin {
                     ),
                 );
                 
-                // Add the meta query to the main args
-                if (isset($args['meta_query'])) {
-                    $args['meta_query'] = array_merge(
-                        array('relation' => 'OR'),
-                        array($args['meta_query']),
-                        array($meta_query)
-                    );
-                } else {
-                    $args['meta_query'] = $meta_query;
-                }
+                // 3. We'll add permalink search in the filter_search_all_content method
+                $this->search_permalink_term = $search;
                 
-                // For URL, we'll use the custom filter
-                add_filter('posts_where', array($this, 'filter_posts_by_permalink'));
-                $this->search_permalink_term = $search; // Store search term for the filter
+                // Disable standard search since we're handling it manually
+                $args['s'] = '';
             } else {
-                // Default to searching in title and content
+                // Default case - use standard WP search
                 $args['s'] = $search;
             }
         }
         
         $query = new WP_Query($args);
         
-        // Remove the permalink filter if it was added
-        if (!empty($search) && ($search_column === 'url' || $search_column === 'all')) {
-            remove_filter('posts_where', array($this, 'filter_posts_by_permalink'));
+        // Clean up filters based on the search column
+        if (!empty($search)) {
+            // Remove any filters we added based on search type
+            if ($search_column === 'title') {
+                remove_filter('posts_where', array($this, 'filter_search_by_title'));
+            } elseif ($search_column === 'url') {
+                remove_filter('posts_where', array($this, 'filter_posts_by_permalink'));
+            } elseif ($search_column === 'all') {
+                remove_filter('posts_where', array($this, 'filter_search_all_content'));
+            }
         }
         
         $posts = array();
@@ -386,6 +404,69 @@ class Schema_Link_Manager_Admin {
     }
     
     /**
+     * Filter posts by title
+     * This function is used as a callback for the 'posts_where' filter
+     *
+     * @param string $where The WHERE clause of the query
+     * @return string Modified WHERE clause
+     */
+    public function filter_search_by_title($where) {
+        global $wpdb;
+        
+        if (!empty($this->search_term)) {
+            // Escape the search term for SQL
+            $search_term = '%' . $wpdb->esc_like($this->search_term) . '%';
+            
+            // Add title search to WHERE clause
+            $where .= $wpdb->prepare(
+                " AND ($wpdb->posts.post_title LIKE %s)",
+                $search_term
+            );
+        }
+        
+        return $where;
+    }
+    
+    /**
+     * Filter to search in all content (title, content, excerpt, and permalink)
+     * This function is used as a callback for the 'posts_where' filter
+     *
+     * @param string $where The WHERE clause of the query
+     * @return string Modified WHERE clause
+     */
+    public function filter_search_all_content($where) {
+        global $wpdb;
+        
+        if (!empty($this->search_term)) {
+            // Escape the search term for SQL
+            $search_term = '%' . $wpdb->esc_like($this->search_term) . '%';
+            
+            // Create a comprehensive search across multiple fields
+            // We need to use OR to connect all search conditions
+            $content_search = $wpdb->prepare(
+                " AND ($wpdb->posts.post_title LIKE %s OR $wpdb->posts.post_content LIKE %s OR $wpdb->posts.post_excerpt LIKE %s OR $wpdb->posts.post_name LIKE %s OR $wpdb->posts.guid LIKE %s)",
+                $search_term, $search_term, $search_term, $search_term, $search_term
+            );
+            
+            // Extract the post_type constraints from the existing WHERE clause
+            preg_match("/$wpdb->posts.post_type IN \([^)]+\)/", $where, $matches);
+            $post_type_constraint = !empty($matches[0]) ? $matches[0] : '';
+            
+            // Add the new search conditions to the WHERE clause
+            // Preserve the post type filtering
+            if (!empty($post_type_constraint)) {
+                // Add the condition to the WHERE clause, maintaining post type constraint
+                $where .= $content_search;
+            } else {
+                // No post type constraint, just add the search
+                $where .= $content_search;
+            }
+        }
+        
+        return $where;
+    }
+    
+    /**
      * Filter posts by permalink
      * This function is used as a callback for the 'posts_where' filter
      *
@@ -399,10 +480,9 @@ class Schema_Link_Manager_Admin {
             // Escape the search term for SQL
             $search_term = '%' . $wpdb->esc_like($this->search_permalink_term) . '%';
             
-            // Add permalink search to WHERE clause with proper grouping to preserve other filters
-            // We have to search in post_name (slug) and guid which contains the original URL
+            // Add permalink search to WHERE clause
             $where .= $wpdb->prepare(
-                " OR (($wpdb->posts.post_name LIKE %s OR $wpdb->posts.guid LIKE %s) AND $wpdb->posts.post_type IN (SELECT post_type FROM $wpdb->posts WHERE 1=1" . str_replace("$wpdb->posts.post_type", "post_type", $where) . "))",
+                " AND ($wpdb->posts.post_name LIKE %s OR $wpdb->posts.guid LIKE %s)",
                 $search_term,
                 $search_term
             );
