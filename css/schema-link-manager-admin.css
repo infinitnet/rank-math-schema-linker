@@ -304,12 +304,18 @@
     font-size: 12px;
     margin-right: 2px;
     color: #555;
+    transition: all 0.2s ease;
+}
+
+.link-tab-button:hover {
+    background: #e5e5e5;
 }
 
 .link-tab-button.active {
     background: #fff;
     color: #000;
     position: relative;
+    font-weight: bold;
 }
 
 .link-tab-button.active:after {

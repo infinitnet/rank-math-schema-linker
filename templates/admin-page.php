@@ -185,8 +185,8 @@ if (!defined('ABSPATH')) {
                                             <option value="related"><?php _e('Related', 'schema-link-manager'); ?></option>
                                         </select>
                                         <div class="add-link-tabs">
-                                            <button type="button" class="link-tab-button active" data-tab="single"><?php _e('Single', 'schema-link-manager'); ?></button>
-                                            <button type="button" class="link-tab-button" data-tab="bulk"><?php _e('Bulk', 'schema-link-manager'); ?></button>
+                                            <button type="button" class="link-tab-button active" data-tab="single" onclick="switchTab(this, 'single')"><?php _e('Single', 'schema-link-manager'); ?></button>
+                                            <button type="button" class="link-tab-button" data-tab="bulk" onclick="switchTab(this, 'bulk')"><?php _e('Bulk', 'schema-link-manager'); ?></button>
                                         </div>
                                         <div class="link-input-containers">
                                             <div class="link-input-container single-link-container active">

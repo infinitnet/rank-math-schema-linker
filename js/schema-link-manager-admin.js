@@ -1,3 +1,16 @@
+// Global function to handle tab switching directly
+function switchTab(button, tabType) {
+    const row = jQuery(button).closest('tr');
+    
+    // Update active tab
+    row.find('.link-tab-button').removeClass('active');
+    jQuery(button).addClass('active');
+    
+    // Show corresponding input container
+    row.find('.link-input-container').removeClass('active');
+    row.find('.' + tabType + '-link-container').addClass('active');
+}
+
 (function($) {
     'use strict';
     
@@ -36,6 +49,7 @@
     }
     
     $(document).ready(function() {
+        
         // Initialize search functionality
         $('.schema-link-manager-filters form').on('submit', function(event) {
             // Ensure empty search fields are not included in the URL
