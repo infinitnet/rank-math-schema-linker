@@ -24,8 +24,23 @@ class Schema_Link_Manager {
         add_action('init', array($this, 'register_meta'));
         add_action('enqueue_block_editor_assets', array($this, 'enqueue_editor_assets'));
         
-        // Hook into the final schema output
-        add_filter('rank_math/json_ld', array($this, 'add_links_to_schema'), 99, 2);
+        // Setup integrations with SEO plugins
+        add_action('plugins_loaded', array($this, 'setup_seo_plugin_integrations'));
+    }
+    
+    /**
+     * Setup integrations with SEO plugins
+     */
+    public function setup_seo_plugin_integrations() {
+        // Check for Rank Math
+        if (class_exists('RankMath')) {
+            add_filter('rank_math/json_ld', array($this, 'add_links_to_schema'), 99, 2);
+        }
+        
+        // Check for Yoast SEO
+        if (defined('WPSEO_VERSION')) {
+            add_filter('wpseo_schema_webpage', array($this, 'add_links_to_yoast_schema'), 10, 1);
+        }
     }
     
     /**
@@ -147,6 +162,32 @@ class Schema_Link_Manager {
                     $data[$entity_id]['isPartOf']['relatedLink'] = $related_links;
                 }
             }
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Add links to Yoast SEO schema
+     * 
+     * @param array $data WebPage schema data
+     * @return array Modified WebPage schema data
+     */
+    public function add_links_to_yoast_schema($data) {
+        $post_id = get_the_ID();
+        if (!$post_id) {
+            return $data;
+        }
+        
+        $significant_links = $this->process_links($post_id, 'schema_significant_links');
+        $related_links = $this->process_links($post_id, 'schema_related_links');
+        
+        if (!empty($significant_links)) {
+            $data['significantLink'] = $significant_links;
+        }
+        
+        if (!empty($related_links)) {
+            $data['relatedLink'] = $related_links;
         }
         
         return $data;
