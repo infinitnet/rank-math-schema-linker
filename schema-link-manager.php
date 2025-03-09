@@ -32,14 +32,26 @@ class Schema_Link_Manager {
      * Setup integrations with SEO plugins
      */
     public function setup_seo_plugin_integrations() {
+        $has_seo_plugin = false;
+        
         // Check for Rank Math
         if (class_exists('RankMath')) {
             add_filter('rank_math/json_ld', array($this, 'add_links_to_schema'), 99, 2);
+            $has_seo_plugin = true;
         }
         
         // Check for Yoast SEO
         if (defined('WPSEO_VERSION')) {
             add_filter('wpseo_schema_webpage', array($this, 'add_links_to_yoast_schema'), 10, 1);
+            $has_seo_plugin = true;
+        }
+        
+        // If no supported SEO plugin is active, use the fallback method
+        if (!$has_seo_plugin) {
+            // Add our filter to various places where schema might be output
+            add_action('wp_head', array($this, 'inject_schema_links'), 99);
+            add_action('wp_footer', array($this, 'inject_schema_links'), 99);
+            add_filter('the_content', array($this, 'process_content_for_schema'), 99);
         }
     }
     
@@ -191,6 +203,120 @@ class Schema_Link_Manager {
         }
         
         return $data;
+    }
+    /**
+     * Process content for schema
+     * 
+     * @param string $content The post content
+     * @return string Modified content
+     */
+    public function process_content_for_schema($content) {
+        return $this->inject_links_into_json_ld($content);
+    }
+
+    /**
+     * Inject schema links directly
+     */
+    public function inject_schema_links() {
+        $post_id = get_the_ID();
+        if (!$post_id) {
+            return;
+        }
+        
+        $significant_links = $this->process_links($post_id, 'schema_significant_links');
+        $related_links = $this->process_links($post_id, 'schema_related_links');
+        
+        if (empty($significant_links) && empty($related_links)) {
+            return;
+        }
+        
+        // Use output buffering just for this specific action
+        ob_start();
+        echo $this->inject_links_into_json_ld(ob_get_clean());
+    }
+
+    /**
+     * Fallback method to inject links into JSON-LD schema
+     * 
+     * @param string $html The HTML content
+     * @return string Modified HTML content
+     */
+    public function inject_links_into_json_ld($html) {
+        if (empty($html)) {
+            return $html;
+        }
+        
+        $post_id = get_the_ID();
+        if (!$post_id) {
+            return $html;
+        }
+        
+        $significant_links = $this->process_links($post_id, 'schema_significant_links');
+        $related_links = $this->process_links($post_id, 'schema_related_links');
+        
+        if (empty($significant_links) && empty($related_links)) {
+            return $html;
+        }
+        
+        // Use preg_replace_callback to find and modify JSON-LD scripts
+        return preg_replace_callback(
+            '/<script type=["\']application\/ld\+json["\'].*?>(.*?)<\/script>/s',
+            function($matches) use ($significant_links, $related_links) {
+                $json = trim($matches[1]);
+                
+                // Try to decode the JSON
+                $data = json_decode($json, true);
+                if (empty($data) || json_last_error() !== JSON_ERROR_NONE) {
+                    return $matches[0]; // Return original if not valid JSON
+                }
+                
+                $modified = false;
+                
+                // Check if this is a WebPage schema
+                if (isset($data['@type'])) {
+                    // Handle both string and array @type values
+                    $types = is_array($data['@type']) ? $data['@type'] : [$data['@type']];
+                    
+                    if (in_array('WebPage', $types)) {
+                        if (!empty($significant_links)) {
+                            $data['significantLink'] = $significant_links;
+                        }
+                        if (!empty($related_links)) {
+                            $data['relatedLink'] = $related_links;
+                        }
+                        $modified = true;
+                    }
+                }
+                
+                // Check for WebPage within a graph
+                if (isset($data['@graph']) && is_array($data['@graph'])) {
+                    foreach ($data['@graph'] as $key => $entity) {
+                        if (isset($entity['@type'])) {
+                            // Handle both string and array @type values
+                            $types = is_array($entity['@type']) ? $entity['@type'] : [$entity['@type']];
+                            
+                            if (in_array('WebPage', $types)) {
+                                if (!empty($significant_links)) {
+                                    $data['@graph'][$key]['significantLink'] = $significant_links;
+                                }
+                                if (!empty($related_links)) {
+                                    $data['@graph'][$key]['relatedLink'] = $related_links;
+                                }
+                                $modified = true;
+                            }
+                        }
+                    }
+                }
+                
+                // Only modify if we actually changed something
+                if ($modified) {
+                    return '<script type="application/ld+json">' . wp_json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>';
+                }
+                
+                return $matches[0]; // Return original if no WebPage found
+            },
+            $html
+        );
     }
 }
 
