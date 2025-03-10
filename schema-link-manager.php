@@ -5,7 +5,7 @@
  * Version: 1.1.7
  * Author: Infinitnet
  * Author URI: https://infinitnet.io/
- * License: GPLv3
+ * License: GPLv2 or later
  * Text Domain: schema-link-manager
  */
 
