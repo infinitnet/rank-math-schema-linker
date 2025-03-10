@@ -3,7 +3,7 @@
  * Plugin Name: Schema Link Manager
  * Description: Adds and manages significant and related links to JSON-LD WebPage schema
  * Version: 1.1.7
- * Author: Infinitnet
+ * Author: Constantin Oesterling
  * Author URI: https://infinitnet.io/
  * License: GPLv2 or later
  * Text Domain: schema-link-manager
